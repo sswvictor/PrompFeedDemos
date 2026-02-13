@@ -1,0 +1,16 @@
+flows:
+  pattern_chitchat:
+    description: |
+      Handle casual or off-topic conversation.
+      Use this pattern when no service recommendation or booking intent is detected.
+    name: pattern chitchat
+    steps:
+      - action: utter_free_chitchat_response
+
+  pattern_completed:
+    description: |
+      Return to listening after a flow completes.
+      Keep this pattern for post-flow idle turns.
+    name: pattern completed
+    steps:
+      - action: action_listen

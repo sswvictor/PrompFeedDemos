@@ -1,0 +1,4 @@
+rasa-pro
+rasa-sdk
+openai
+python-dotenv

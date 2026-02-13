@@ -1,0 +1,70 @@
+version: "3.1"
+
+actions:
+  - action_get_recommendations
+  - action_book_appointment
+  - action_select_recommendation
+
+slots:
+  service_type:
+    type: text
+    mappings:
+      - type: from_llm
+  
+  location:
+    type: text
+    mappings:
+      - type: from_llm
+  
+  date:
+    type: text
+    mappings:
+      - type: from_llm
+  
+  business_name:
+    type: text
+    mappings:
+      - type: from_llm
+  
+  recommendations:
+    type: text
+  
+  booking_info:
+    type: text
+
+responses:
+  utter_ask_service_type:
+    - text: "What type of service are you looking for? I can help with haircuts, spa, gym, restaurants, medical appointments, coffee shops, and more!"
+
+  utter_ask_location:
+    - text: "Where would you like the service? Please provide a location or area."
+
+  utter_ask_date:
+    - text: "When would you like to schedule this? Please provide a date."
+
+  utter_ask_business_name:
+    - text: "Which one would you like to choose? You can say the number (like 'the first one' or 'number 2') or the name."
+
+  utter_recommendations:
+    - text: "{recommendations}"
+
+  utter_booking_info:
+    - text: "{booking_info}"
+
+  utter_free_chitchat_response:
+    - text: "placeholder"
+      metadata:
+        rephrase: True
+        rephrase_prompt: |
+          Task: write a natural assistant reply for service discovery and booking support.
+
+          Conversation history:
+          {{history}}
+
+          User message:
+          {{current_input}}
+
+          Output rules:
+          - Keep the tone friendly and concise.
+          - If user intent is booking/recommendation related, guide to next actionable step.
+          - Do not add role labels or preface text.

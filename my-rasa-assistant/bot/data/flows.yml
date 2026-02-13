@@ -1,0 +1,51 @@
+flows:
+  get_recommendations:
+    description: |
+      Provide service recommendations after service type and location are available.
+      Use this flow for recommendation requests and service discovery intents.
+      If the user switches to a different service type, start a new recommendation cycle.
+    steps:
+      - collect: service_type
+        description: |
+          Capture the requested service category from the latest user input.
+          Skip when the slot is already clear; otherwise ask with utter_ask_service_type.
+      - collect: location
+        description: |
+          Capture the preferred location or area for the service.
+          If the location is missing, ask with utter_ask_location.
+      - action: action_get_recommendations
+      - action: utter_recommendations
+      - collect: business_name
+        description: |
+          Capture which recommendation the user selected (number, name, or confirmation phrase).
+      - action: action_select_recommendation
+      - collect: date
+        description: |
+          Capture preferred appointment date when provided.
+          This field is optional.
+      - action: action_book_appointment
+      - action: utter_booking_info
+
+  book_appointment:
+    description: |
+      Handle direct booking intents.
+      If no business has been selected yet, show recommendations first and collect the user's choice.
+    steps:
+      - collect: service_type
+        description: |
+          Capture the requested service category.
+          Skip when the slot is already clear; otherwise ask with utter_ask_service_type.
+      - collect: location
+        description: |
+          Capture the service location or area.
+          If missing, ask with utter_ask_location.
+      - action: action_get_recommendations
+      - action: utter_recommendations
+      - collect: business_name
+        description: |
+          Capture the selected recommendation (number, name, or confirmation phrase).
+      - action: action_select_recommendation
+      - collect: date
+        description: Capture preferred appointment date when provided. This field is optional.
+      - action: action_book_appointment
+      - action: utter_booking_info
