@@ -1,0 +1,65 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Node
+node_modules/
+frontend/node_modules/
+frontend/screenshots/
+frontend/frontend/
+
+# Build outputs
+dist/
+frontend/dist/
+frontend/.vite/
+
+# Local database / runtime files
+*.db
+*.sqlite
+*.sqlite3
+fixmeapp.db
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Screenshots and captures
+screenshots-*/
+*.png
+*.jpg
+*.jpeg
+
+# Worktree and local tool artifacts
+.claude/
+.edge-shot-*/
+live-*/
+nul
+
+# Local-only / large exports (keep out of remote)
+DB_SCHEMA.md
+
+# Documents and binary office files
+*.pdf
+*.doc
+*.docx
+*.ppt
+*.pptx
+.codex/
+

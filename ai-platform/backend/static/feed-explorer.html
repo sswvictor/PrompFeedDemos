@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fixmeapp — Feed Explorer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f0f12;
+      --surface:   #18181f;
+      --border:    #2a2a35;
+      --accent:    #7c6fff;
+      --accent-lo: #7c6fff22;
+      --text:      #e8e8f0;
+      --muted:     #888898;
+      --green:     #4ade80;
+      --amber:     #fbbf24;
+      --red:       #f87171;
+      --tag-bg:    #2a2a40;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Layout ── */
+    .shell {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      grid-template-rows: 56px 1fr;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .topbar h1 { font-size: 15px; font-weight: 600; letter-spacing: -.3px; }
+    .topbar span { color: var(--muted); font-size: 12px; }
+    .badge {
+      margin-left: auto;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    /* ── Left panel ── */
+    .left {
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 14px 16px 8px;
+    }
+
+    /* ── Mode toggle ── */
+    .mode-toggle {
+      display: flex;
+      gap: 6px;
+      padding: 0 16px 12px;
+    }
+    .mode-btn {
+      flex: 1;
+      padding: 7px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .mode-btn.active {
+      background: var(--accent-lo);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ── Prompt section ── */
+    .prompt-section { padding: 0 16px; }
+
+    .prompt-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 13px;
+      padding: 10px 12px;
+      resize: vertical;
+      min-height: 80px;
+      outline: none;
+      font-family: inherit;
+      transition: border-color .15s;
+    }
+    textarea:focus { border-color: var(--accent); }
+
+    /* Provider ID input */
+    .input-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 0 16px;
+    }
+    input[type=text] {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 12px;
+      padding: 8px 10px;
+      outline: none;
+      font-family: inherit;
+      transition: border-color .15s;
+    }
+    input[type=text]:focus { border-color: var(--accent); }
+    input[type=text]::placeholder { color: var(--muted); }
+
+    /* ── Quick prompts ── */
+    .quick-section { padding: 10px 16px 0; }
+    .quick-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+    .quick-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .chip {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: var(--tag-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      cursor: pointer;
+      transition: all .12s;
+      white-space: nowrap;
+    }
+    .chip:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Run button ── */
+    .run-btn {
+      margin: 14px 16px 0;
+      width: calc(100% - 32px);
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .run-btn:hover { opacity: .88; }
+    .run-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* ── Intent pills ── */
+    .intent-box {
+      margin: 12px 16px 0;
+      padding: 10px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: none;
+    }
+    .intent-box.visible { display: block; }
+    .intent-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+    .pill {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+    .pill.signal   { background: #1a2a4a; color: #7dd3fc; border: 1px solid #2a4a7a; }
+    .pill.emphasis { background: #1a2a1a; color: #86efac; border: 1px solid #2a4a2a; }
+    .pill.sort     { background: #2a1a3a; color: #d8b4fe; border: 1px solid #4a2a6a; }
+    .intent-key { font-size: 10px; color: var(--muted); }
+
+    /* ── Block list ── */
+    .block-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .block-item {
+      padding: 9px 11px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      cursor: pointer;
+      transition: all .12s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .block-item:hover { border-color: var(--accent); }
+    .block-item.selected { border-color: var(--accent); background: var(--accent-lo); }
+    .block-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .block-name { font-size: 12px; font-weight: 500; flex: 1; }
+    .block-meta { font-size: 10px; color: var(--muted); }
+
+    /* Block type colours */
+    .dot-SearchSummaryCard  { background: #7dd3fc; }
+    .dot-ProviderCard       { background: #a78bfa; }
+    .dot-ProviderResults    { background: #a78bfa; }
+    .dot-AvailabilityPicker { background: #4ade80; }
+    .dot-BookingDraftCard   { background: #fbbf24; }
+    .dot-SafetyInfoCard     { background: #f87171; }
+    .dot-InfoCard           { background: #94a3b8; }
+    .dot-ProfileMemoryCard  { background: #fb923c; }
+    .dot-CTAButtonRow       { background: #e879f9; }
+
+    /* ── Right panel — detail view ── */
+    .right {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .detail-header {
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .detail-type {
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .detail-hint {
+      font-size: 11px;
+      color: var(--muted);
+      flex: 1;
+    }
+
+    /* ── Emphasis tags in detail ── */
+    .emphasis-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .em-tag {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: #1a2a1a;
+      color: #86efac;
+      border: 1px solid #2a4a2a;
+      font-weight: 600;
+    }
+
+    /* ── Card preview ── */
+    .card-preview {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: none;
+    }
+    .card-preview.visible { display: block; }
+
+    /* Provider card preview */
+    .pcard {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      max-width: 380px;
+    }
+    .pcard-header { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+    .pcard-avatar {
+      width: 52px; height: 52px;
+      border-radius: 12px;
+      background: var(--tag-bg);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .pcard-name { font-size: 15px; font-weight: 600; }
+    .pcard-location { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .pcard-badge { font-size: 11px; margin-top: 4px; }
+
+    .pcard-stats {
+      display: flex;
+      gap: 16px;
+      padding: 10px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 10px;
+    }
+    .stat { text-align: center; }
+    .stat-value { font-size: 15px; font-weight: 700; }
+    .stat-value.em { color: var(--green); }
+    .stat-label { font-size: 10px; color: var(--muted); margin-top: 1px; }
+
+    .pcard-services { display: flex; flex-wrap: wrap; gap: 5px; }
+    .svc-tag {
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      background: var(--tag-bg);
+      border: 1px solid var(--border);
+    }
+    .svc-tag.matched { border-color: var(--accent); color: var(--accent); }
+
+    .avail-badge {
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--green);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .avail-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+
+    /* ── Raw JSON ── */
+    .json-section {
+      flex: 1;
+      overflow: auto;
+      padding: 14px 20px;
+    }
+    .json-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+    pre {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 11px;
+      line-height: 1.7;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* JSON syntax highlighting */
+    .jkey   { color: #7dd3fc; }
+    .jstr   { color: #86efac; }
+    .jnum   { color: #fbbf24; }
+    .jbool  { color: #f87171; }
+    .jnull  { color: var(--muted); }
+
+    /* ── Empty state ── */
+    .empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--muted);
+    }
+    .empty-icon { font-size: 32px; }
+    .empty-text { font-size: 13px; }
+
+    /* ── Loading ── */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: none;
+    }
+    .spinner.active { display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-box {
+      margin: 12px 16px 0;
+      padding: 10px 12px;
+      background: #2a0f0f;
+      border: 1px solid #5a1a1a;
+      border-radius: 8px;
+      color: var(--red);
+      font-size: 12px;
+      display: none;
+    }
+    .error-box.visible { display: block; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- Top bar -->
+  <header class="topbar">
+    <h1>Fixmeapp</h1>
+    <span>Feed Explorer</span>
+    <div class="badge">UIBlock contract v1</div>
+  </header>
+
+  <!-- Left panel -->
+  <aside class="left">
+    <div class="panel-title">Request</div>
+
+    <!-- Mode toggle -->
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="mode-search" onclick="setMode('search')">Search feed</button>
+      <button class="mode-btn" id="mode-provider" onclick="setMode('provider')">Provider profile</button>
+    </div>
+
+    <!-- Search mode -->
+    <div id="section-search">
+      <div class="prompt-section">
+        <div class="prompt-label">Natural language prompt</div>
+        <textarea id="prompt-input" placeholder="e.g. cheap but great hairstylists in östermalm">"cheap but great hairstylists in östermalm"</textarea>
+      </div>
+
+      <div class="quick-section">
+        <div class="quick-label">Quick examples</div>
+        <div class="quick-chips">
+          <span class="chip" onclick="setPrompt('cheap but great hairstylists in östermalm')">budget + quality hair</span>
+          <span class="chip" onclick="setPrompt('nail salon today asap')">nails today urgent</span>
+          <span class="chip" onclick="setPrompt('best balayage salon near me good reviews')">best balayage</span>
+          <span class="chip" onclick="setPrompt('affordable haircut östermalm')">affordable haircut</span>
+          <span class="chip" onclick="setPrompt('premium hair salon luxurious experience')">premium experience</span>
+          <span class="chip" onclick="setPrompt('frisör östermalm bra pris')">Swedish query</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Provider profile mode -->
+    <div id="section-provider" style="display:none">
+      <div class="input-row">
+        <div class="prompt-label">Provider ID</div>
+        <input type="text" id="provider-id-input" placeholder="Paste a provider_id from the DB..." />
+        <div class="prompt-label" style="margin-top:8px">Customer ID (optional — adds memory card)</div>
+        <input type="text" id="customer-id-input" placeholder="Optional customer_id..." />
+      </div>
+    </div>
+
+    <!-- Run button -->
+    <button class="run-btn" id="run-btn" onclick="runRequest()">Run request →</button>
+    <div class="spinner" id="spinner" style="margin: 10px auto 0;"></div>
+    <div class="error-box" id="error-box"></div>
+
+    <!-- Intent pills (search mode only) -->
+    <div class="intent-box" id="intent-box">
+      <div class="intent-key">Detected intent</div>
+      <div class="intent-row" id="intent-signals"></div>
+      <div class="intent-key" style="margin-top:6px">Emphasis</div>
+      <div class="intent-row" id="intent-emphasis"></div>
+      <div class="intent-row" id="intent-sort" style="margin-top:4px"></div>
+    </div>
+
+    <!-- Block list -->
+    <div class="panel-title" id="blocks-title" style="display:none">Blocks returned</div>
+    <div class="block-list" id="block-list"></div>
+  </aside>
+
+  <!-- Right panel -->
+  <main class="right">
+    <div class="empty" id="empty-state">
+      <div class="empty-icon">⚡</div>
+      <div class="empty-text">Run a request to see UIBlocks</div>
+    </div>
+
+    <!-- Detail view (hidden until a block is selected) -->
+    <div id="detail-view" style="display:none; flex-direction:column; height:100%; overflow:hidden;">
+      <div class="detail-header">
+        <div id="detail-dot" class="block-dot" style="width:10px;height:10px"></div>
+        <div class="detail-type" id="detail-type"></div>
+        <div class="detail-hint" id="detail-hint"></div>
+        <div class="emphasis-row" id="detail-emphasis"></div>
+      </div>
+
+      <!-- Visual card preview -->
+      <div class="card-preview" id="card-preview"></div>
+
+      <!-- Raw JSON -->
+      <div class="json-section">
+        <div class="json-label">Full block payload</div>
+        <pre id="json-output"></pre>
+      </div>
+    </div>
+  </main>
+
+</div>
+
+<script>
+  let mode = 'search';
+  let lastResponse = null;
+  let selectedIndex = 0;
+
+  const BLOCK_HINTS = {
+    SearchSummaryCard:  'Confirms what was searched. Always first in search feed.',
+    ProviderCard:       'Single provider. Used in both search results and DM profile flow.',
+    ProviderResults:    'Ordered list of ProviderCards with sort strategy.',
+    AvailabilityPicker: 'Date + time slot selector. Used in provider profile flow.',
+    BookingDraftCard:   'Pre-booking confirmation with hold expiry.',
+    SafetyInfoCard:     'GDPR / privacy consent block.',
+    InfoCard:           'Generic notice or text block.',
+    ProfileMemoryCard:  'Returning customer preferences + visit history.',
+    CTAButtonRow:       'Action buttons — intent-aware labels.',
+  };
+
+  function setMode(m) {
+    mode = m;
+    document.getElementById('mode-search').classList.toggle('active', m === 'search');
+    document.getElementById('mode-provider').classList.toggle('active', m === 'provider');
+    document.getElementById('section-search').style.display = m === 'search' ? 'block' : 'none';
+    document.getElementById('section-provider').style.display = m === 'provider' ? 'block' : 'none';
+    document.getElementById('intent-box').classList.remove('visible');
+    clearBlocks();
+  }
+
+  function setPrompt(text) {
+    document.getElementById('prompt-input').value = text;
+  }
+
+  function clearBlocks() {
+    document.getElementById('block-list').innerHTML = '';
+    document.getElementById('blocks-title').style.display = 'none';
+    document.getElementById('detail-view').style.display = 'none';
+    document.getElementById('empty-state').style.display = 'flex';
+  }
+
+  async function runRequest() {
+    const btn = document.getElementById('run-btn');
+    const spinner = document.getElementById('spinner');
+    const errorBox = document.getElementById('error-box');
+
+    btn.disabled = true;
+    spinner.classList.add('active');
+    errorBox.classList.remove('visible');
+    clearBlocks();
+
+    try {
+      let resp, data;
+
+      if (mode === 'search') {
+        const prompt = document.getElementById('prompt-input').value.trim();
+        if (!prompt) throw new Error('Enter a prompt first.');
+
+        resp = await fetch('/api/v1/feed/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt }),
+        });
+      } else {
+        const pid = document.getElementById('provider-id-input').value.trim();
+        if (!pid) throw new Error('Enter a Provider ID.');
+        const cid = document.getElementById('customer-id-input').value.trim();
+        const url = `/api/v1/feed/provider/${pid}${cid ? '?customer_id=' + cid : ''}`;
+        resp = await fetch(url);
+      }
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.detail || `HTTP ${resp.status}`);
+      }
+
+      data = await resp.json();
+      lastResponse = data;
+      renderResponse(data);
+    } catch (e) {
+      errorBox.textContent = e.message;
+      errorBox.classList.add('visible');
+    } finally {
+      btn.disabled = false;
+      spinner.classList.remove('active');
+    }
+  }
+
+  function renderResponse(data) {
+    const blocks = data.blocks || [];
+
+    // Intent pills (search mode)
+    if (data.intent) {
+      const ib = document.getElementById('intent-box');
+      ib.classList.add('visible');
+
+      const signalsEl = document.getElementById('intent-signals');
+      signalsEl.innerHTML = (data.intent.signals || [])
+        .map(s => `<span class="pill signal">${s}</span>`).join('') || '<span style="color:var(--muted);font-size:11px">none</span>';
+
+      const emphEl = document.getElementById('intent-emphasis');
+      emphEl.innerHTML = (data.intent.emphasis || [])
+        .map(e => `<span class="pill emphasis">${e}</span>`).join('');
+
+      const sortEl = document.getElementById('intent-sort');
+      sortEl.innerHTML = `<span class="pill sort">sort: ${data.intent.sort_strategy}</span>`;
+    }
+
+    // Block list
+    const list = document.getElementById('block-list');
+    document.getElementById('blocks-title').style.display = 'block';
+
+    blocks.forEach((block, i) => {
+      const item = document.createElement('div');
+      item.className = 'block-item';
+      item.onclick = () => selectBlock(i);
+
+      const dotClass = `dot-${block.type}`;
+      const emCount = (block.emphasis || []).length;
+
+      item.innerHTML = `
+        <div class="block-dot ${dotClass}"></div>
+        <div class="block-name">${block.type}</div>
+        <div class="block-meta">${emCount > 0 ? emCount + ' emphasis' : ''}</div>
+      `;
+      list.appendChild(item);
+    });
+
+    // Auto-select first block
+    selectBlock(0);
+  }
+
+  function selectBlock(index) {
+    if (!lastResponse) return;
+    const blocks = lastResponse.blocks || [];
+    if (index < 0 || index >= blocks.length) return;
+
+    selectedIndex = index;
+
+    // Update selected state
+    document.querySelectorAll('.block-item').forEach((el, i) => {
+      el.classList.toggle('selected', i === index);
+    });
+
+    const block = blocks[index];
+    document.getElementById('empty-state').style.display = 'none';
+    const dv = document.getElementById('detail-view');
+    dv.style.display = 'flex';
+
+    // Header
+    document.getElementById('detail-type').textContent = block.type;
+    document.getElementById('detail-hint').textContent = BLOCK_HINTS[block.type] || '';
+    const dot = document.getElementById('detail-dot');
+    dot.className = `block-dot dot-${block.type}`;
+    dot.style.width = '10px';
+    dot.style.height = '10px';
+
+    // Emphasis tags
+    const emRow = document.getElementById('detail-emphasis');
+    emRow.innerHTML = (block.emphasis || [])
+      .map(e => `<span class="em-tag">${e}</span>`).join('');
+
+    // Visual preview
+    renderCardPreview(block);
+
+    // JSON
+    document.getElementById('json-output').innerHTML = syntaxHighlight(JSON.stringify(block, null, 2));
+  }
+
+  function renderCardPreview(block) {
+    const preview = document.getElementById('card-preview');
+    preview.innerHTML = '';
+    preview.classList.remove('visible');
+
+    if (block.type === 'ProviderCard') {
+      preview.classList.add('visible');
+      preview.innerHTML = buildProviderCardHTML(block);
+    } else if (block.type === 'ProviderResults') {
+      const providers = (block.data.providers || []).slice(0, 3);
+      if (providers.length) {
+        preview.classList.add('visible');
+        preview.innerHTML = `
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px">
+            ${block.data.total_found} provider${block.data.total_found !== 1 ? 's' : ''} — sorted by <strong>${block.data.sort_strategy}</strong>
+          </div>
+          ${providers.map(p => buildProviderCardHTML({ data: p, emphasis: block.emphasis })).join('')}
+        `;
+      }
+    } else if (block.type === 'SearchSummaryCard') {
+      preview.classList.add('visible');
+      const d = block.data;
+      preview.innerHTML = `
+        <div class="pcard" style="max-width:100%">
+          <div style="font-size:13px;font-weight:600;margin-bottom:4px">${escHtml(d.subtitle)}</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px">${d.result_count} result${d.result_count !== 1 ? 's' : ''} found</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px">
+            ${(d.detected_signals || []).map(s => `<span class="pill signal">${s}</span>`).join('')}
+          </div>
+        </div>
+      `;
+    } else if (block.type === 'CTAButtonRow') {
+      preview.classList.add('visible');
+      const btns = (block.data.buttons || []);
+      preview.innerHTML = `
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          ${btns.map(b => `
+            <div style="padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;
+              background:${b.style==='primary'?'var(--accent)':'transparent'};
+              border:1px solid ${b.style==='ghost'?'var(--border)':'var(--accent)'};
+              color:${b.style==='primary'?'#fff':'var(--accent)'}">
+              ${escHtml(b.label)}
+            </div>
+          `).join('')}
+        </div>
+      `;
+    } else if (block.type === 'AvailabilityPicker') {
+      preview.classList.add('visible');
+      const d = block.data;
+      const dates = d.available_dates || [];
+      preview.innerHTML = `
+        <div class="pcard" style="max-width:100%">
+          <div style="font-size:13px;font-weight:600;margin-bottom:8px">${escHtml(d.provider_name)} — Availability</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+            ${dates.slice(0, 5).map((date, i) => {
+              const slots = (d.slots_by_date[date] || []);
+              return `<div style="padding:6px 10px;border-radius:8px;border:1px solid ${i===0?'var(--accent)':'var(--border)'};
+                background:${i===0?'var(--accent-lo)':'transparent'};font-size:11px;text-align:center">
+                <div style="font-weight:600;color:${i===0?'var(--accent)':'var(--text)'}">${date.slice(5)}</div>
+                <div style="color:var(--muted)">${slots.length} slots</div>
+              </div>`;
+            }).join('')}
+          </div>
+          ${dates[0] ? `<div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${(d.slots_by_date[dates[0]] || []).slice(0, 6).map(s =>
+              `<span style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);font-size:11px">${s.time_label}</span>`
+            ).join('')}
+          </div>` : ''}
+        </div>
+      `;
+    } else if (block.type === 'ProfileMemoryCard') {
+      preview.classList.add('visible');
+      const d = block.data;
+      preview.innerHTML = `
+        <div class="pcard" style="max-width:100%">
+          <div style="font-size:13px;font-weight:600;margin-bottom:4px">
+            Welcome back${d.display_name ? ', ' + escHtml(d.display_name) : ''}
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px">
+            ${d.visit_count} visit${d.visit_count !== 1 ? 's' : ''}${d.last_visit ? ' · last ' + d.last_visit : ''}
+          </div>
+          ${(d.preferences || []).slice(0, 3).map(p => `
+            <div style="font-size:11px;padding:5px 0;border-bottom:1px solid var(--border)">
+              <span style="color:var(--muted)">${p.key}</span>: ${escHtml(p.value)}
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+  }
+
+  function buildProviderCardHTML(block) {
+    const d = block.data;
+    const emphasis = block.emphasis || [];
+    const em = (field) => emphasis.includes(field);
+
+    const priceColors = { 1: '#4ade80', 2: '#7c6fff', 3: '#fbbf24', 4: '#f87171' };
+    const priceColor = priceColors[d.price_level] || '#888';
+
+    const matchedIds = new Set((d.matched_services || []).map(s => s.service_id));
+
+    return `
+      <div class="pcard" style="margin-bottom:8px">
+        <div class="pcard-header">
+          <div class="pcard-avatar">${d.name ? d.name[0] : '?'}</div>
+          <div style="flex:1">
+            <div class="pcard-name">${escHtml(d.name)}</div>
+            <div class="pcard-location">${[d.city, d.location_salon].filter(Boolean).join(' · ')}</div>
+            <div class="pcard-badge" style="color:${priceColor}">${escHtml(d.price_level_label || '')}${d.starting_from ? ' · from ' + Math.round(d.starting_from) + ' SEK' : ''}</div>
+          </div>
+        </div>
+
+        <div class="pcard-stats">
+          <div class="stat">
+            <div class="stat-value ${em('rating') ? 'em' : ''}">${d.rating?.toFixed(1) ?? '—'}</div>
+            <div class="stat-label">rating</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value ${em('revisit_rate') ? 'em' : ''}">${d.revisit_rate ? Math.round(d.revisit_rate * 100) + '%' : '—'}</div>
+            <div class="stat-label">revisit</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value ${em('review_count') ? 'em' : ''}">${d.review_count ?? 0}</div>
+            <div class="stat-label">reviews</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value ${em('price_level') ? 'em' : ''}" style="color:${priceColor}">${'$'.repeat(d.price_level)}</div>
+            <div class="stat-label">price</div>
+          </div>
+        </div>
+
+        <div class="pcard-services">
+          ${(d.services || []).map(s =>
+            `<span class="svc-tag${matchedIds.has(s.service_id) ? ' matched' : ''}">${escHtml(s.name)}</span>`
+          ).join('')}
+        </div>
+
+        ${d.available_today || d.next_available ? `
+          <div class="avail-badge">
+            <div class="avail-dot"></div>
+            ${d.available_today ? 'Available today' : 'Next: ' + (d.next_available ? d.next_available.slice(0, 10) : '')}
+            ${d.next_available && !d.available_today ? '' : ''}
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  function syntaxHighlight(json) {
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
+      let cls = 'jnum';
+      if (/^"/.test(match)) {
+        cls = /:$/.test(match) ? 'jkey' : 'jstr';
+      } else if (/true|false/.test(match)) {
+        cls = 'jbool';
+      } else if (/null/.test(match)) {
+        cls = 'jnull';
+      }
+      return `<span class="${cls}">${match}</span>`;
+    });
+  }
+
+  function escHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // Keyboard: arrow keys to navigate blocks
+  document.addEventListener('keydown', (e) => {
+    if (!lastResponse) return;
+    const blocks = lastResponse.blocks || [];
+    if (e.key === 'ArrowDown') { e.preventDefault(); selectBlock(Math.min(selectedIndex + 1, blocks.length - 1)); }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); selectBlock(Math.max(selectedIndex - 1, 0)); }
+    if (e.key === 'Enter' && document.activeElement.tagName !== 'TEXTAREA') runRequest();
+  });
+</script>
+</body>
+</html>

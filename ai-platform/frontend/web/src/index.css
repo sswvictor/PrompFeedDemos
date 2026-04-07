@@ -1,0 +1,167 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Scrollbar ─────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: #0A0A0A; }
+::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 4px; }
+
+/* ── Base reset ────────────────────────────────────────────── */
+* { -webkit-tap-highlight-color: transparent; }
+
+body {
+  margin: 0;
+  padding: 0;
+  background: #0A0A0A;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+}
+
+/* Date picker */
+input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); }
+
+/* ── Keyframes ─────────────────────────────────────────────── */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes checkmark {
+  0%   { transform: scale(0); }
+  50%  { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+/* Step transitions — forward (right → center) */
+@keyframes stepEnterForward {
+  from { opacity: 0; transform: translateX(22px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Step transitions — back (left → center) */
+@keyframes stepEnterBack {
+  from { opacity: 0; transform: translateX(-22px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Scale in (modals, badges) */
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Shimmer skeleton */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Pulse glow — subtle accent ring */
+@keyframes pulseAccent {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 245, 240, 0); }
+  50%       { box-shadow: 0 0 0 6px rgba(245, 245, 240, 0.06); }
+}
+
+/* ── Animation utility classes ─────────────────────────────── */
+
+.animate-fade-in {
+  animation: fadeIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-checkmark {
+  animation: checkmark 0.5s ease-out 0.2s both;
+}
+
+.animate-step-forward {
+  animation: stepEnterForward 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-step-back {
+  animation: stepEnterBack 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-pulse-accent {
+  animation: pulseAccent 2.4s ease-in-out infinite;
+}
+
+/* Staggered delay helpers */
+.delay-75  { animation-delay: 75ms; }
+.delay-150 { animation-delay: 150ms; }
+.delay-225 { animation-delay: 225ms; }
+.delay-300 { animation-delay: 300ms; }
+
+/* ── Welcome splash — line reveal (blur + rise + opacity) ──── */
+
+@keyframes lineReveal {
+  from { opacity: 0; transform: translateY(14px); filter: blur(6px); }
+  to   { opacity: 1; transform: translateY(0);    filter: blur(0); }
+}
+
+/* CTA button reveal — scale up from slightly below */
+@keyframes ctaReveal {
+  from { opacity: 0; transform: translateY(22px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+/* Horizontal scan line for AI analysis card */
+@keyframes scanLine {
+  0%   { top: 0%;   opacity: 0; }
+  8%   { opacity: 1; }
+  92%  { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* Reveal row — staggered items in results */
+@keyframes revealRow {
+  from { opacity: 0; transform: translateX(-10px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Counter number roll-up */
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Phase exit — content slides up and fades */
+@keyframes phaseExit {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-14px); filter: blur(4px); }
+}
+
+.animate-line-reveal { animation: lineReveal 0.8s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-cta-reveal  { animation: ctaReveal 0.65s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-reveal-row  { animation: revealRow 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-count-up    { animation: countUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-phase-exit  { animation: phaseExit 0.35s cubic-bezier(0.55, 0, 1, 0.45) both; }
+
+/* Extended delay helpers for staggered splash lines */
+.delay-400  { animation-delay: 400ms; }
+.delay-600  { animation-delay: 600ms; }
+.delay-900  { animation-delay: 900ms; }
+.delay-1200 { animation-delay: 1200ms; }
+.delay-1600 { animation-delay: 1600ms; }
+.delay-2000 { animation-delay: 2000ms; }
+.delay-2500 { animation-delay: 2500ms; }
+.delay-2900 { animation-delay: 2900ms; }
