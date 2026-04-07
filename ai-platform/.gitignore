@@ -54,6 +54,7 @@ nul
 
 # Local-only / large exports (keep out of remote)
 DB_SCHEMA.md
+frontend/web/ARCHITECTURE_POV.md
 
 # Documents and binary office files
 *.pdf
